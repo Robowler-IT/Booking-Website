@@ -39,12 +39,17 @@ const INITIAL: BookingDraft = {
 }
 
 export default function BookingFlow() {
+  const [envError, setEnvError] = useState(false)
   const [initialized, setInitialized] = useState(false)
   const [step, setStep] = useState(1)
   const [draft, setDraft] = useState<BookingDraft>(INITIAL)
 
-  // Restore draft from sessionStorage after Google OAuth redirect
   useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL) {
+      setEnvError(true)
+      setInitialized(true)
+      return
+    }
     try {
       const saved = sessionStorage.getItem('booking-draft')
       if (saved) {
@@ -62,6 +67,18 @@ export default function BookingFlow() {
       sessionStorage.setItem('booking-draft', JSON.stringify(draft))
     }
   }, [draft, step])
+
+  if (envError) {
+    return (
+      <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+        <div className="text-center p-8 max-w-md">
+          <p className="text-6xl mb-4">⚙️</p>
+          <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Configuration Required</h2>
+          <p className="text-slate-500 dark:text-gray-400 text-sm">Set <code className="bg-slate-100 dark:bg-[#1a1a1a] px-1 rounded">NEXT_PUBLIC_SUPABASE_URL</code> and <code className="bg-slate-100 dark:bg-[#1a1a1a] px-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> in Vercel environment variables.</p>
+        </div>
+      </div>
+    )
+  }
 
   if (!initialized) return null
 
